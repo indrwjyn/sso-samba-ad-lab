@@ -1,3 +1,5 @@
+🇮🇩 Bahasa Indonesia | [🇬🇧 English](README.en.md)
+
 # SSO Lab: NIS dan Samba Active Directory (Debian 12 + Windows 11)
 
 Dokumentasi lab layanan direktori dan otentikasi terpusat di VirtualBox. Ini lab di lingkungan virtual untuk belajar, bukan konfigurasi produksi. Semua password di repo ini sudah diganti placeholder dan screenshot yang memuat password sudah disensor.
@@ -35,17 +37,148 @@ Setiap VM Debian memakai Adapter 1 (NAT) untuk mengunduh paket dan Adapter 2 (In
 2. **Samba 4 AD DC.** Provisioning domain, Kerberos (`kinit`, `klist`), dan DNS SRV (`_ldap._tcp`, `_kerberos._tcp`) (gambar 5.x sampai 9.x).
 3. **Domain join.** Linux dengan `realmd` + SSSD dan `pam_mkhomedir`, Windows lewat System Properties (gambar 10.x sampai 15.x).
 
-## Hasil utama
+## Ringkasan hasil
 
-| Bukti | Screenshot |
-|---|---|
-| Client terikat ke NIS master dan membaca akun dari server | ![ypcat](screenshots/4.2.png) |
-| Record SRV untuk LDAP (389) dan Kerberos (88) menunjuk ke dc1 | ![srv](screenshots/8.2.png) |
-| Linux berstatus `kerberos-member` | ![realm](screenshots/11.2.png) |
-| Windows bergabung ke domain | ![welcome](screenshots/14.2.png) |
-| Login Windows dengan akun domain | ![whoami](screenshots/15.2.png) |
+- Client Linux terikat ke NIS master dan membaca akun dari server (4.1, 4.2).
+- Samba AD DC aktif, dengan record SRV LDAP (389) dan Kerberos (88) menunjuk ke dc1 (7.1, 8.2).
+- Linux berstatus `kerberos-member` dan akun domain bisa login (11.2, 12.2).
+- Windows bergabung ke domain dan login dengan `sinergi\budi.santoso` (14.2, 15.2).
 
-Seluruh screenshot ada di folder [screenshots](screenshots/) dengan nama sesuai nomor langkah.
+## Bukti per langkah
+
+Semua screenshot ditampilkan berurutan sesuai alur lab. Berkas aslinya ada di folder [screenshots](screenshots/).
+
+### Persiapan lab
+
+**L.1.** VM induk Debian 12 yang dipakai sebagai base clone, dengan Adapter 1 NAT dan Adapter 2 Internal Network `sinergi-lab`.
+
+![L.1](screenshots/L.1.png)
+
+**L.2.** Pohon snapshot VirtualBox: dc1-server dan client-linux dibuat sebagai linked clone dari snapshot `base-bersih`.
+
+![L.2](screenshots/L.2.png)
+
+**5.1.** dc1: `/etc/hosts`, `hostname -f`, dan `ip a` (192.168.10.10 pada adapter kedua).
+
+![5.1](screenshots/5.1.png)
+
+### Tugas 1: NIS
+
+**1.1.** dc1: menetapkan domain NIS `nis-sinergi` dan memasang paket `nis` dan `rpcbind`.
+
+![1.1](screenshots/1.1.png)
+
+**1.2.** dc1: berkas `/etc/default/nis`. Di Debian 12 variabel `NISSERVER` tidak ada, peran master ditetapkan lewat `ypinit -m`.
+
+![1.2](screenshots/1.2.png)
+
+**2.1.** dc1: membuat dua user uji, `user-nis1` dan `user-nis2`.
+
+![2.1](screenshots/2.1.png)
+
+**2.2.** dc1: `ypinit -m` membangun peta NIS (termasuk pesan `RPC: Program not registered` yang dibahas di bagian kendala).
+
+![2.2](screenshots/2.2.png)
+
+**2.3.** dc1: layanan `ypserv` berstatus active (running).
+
+![2.3](screenshots/2.3.png)
+
+**3.1.** client-linux: memasang paket NIS dan mengisi `/etc/defaultdomain`.
+
+![3.1](screenshots/3.1.png)
+
+**3.2.** client-linux: isi `/etc/yp.conf` (menunjuk ke 192.168.10.10) dan `nsswitch.conf` (`files nis`).
+
+![3.2](screenshots/3.2.png)
+
+**4.1.** client-linux: `ypwhich` menampilkan server NIS 192.168.10.10.
+
+![4.1](screenshots/4.1.png)
+
+**4.2.** client-linux: `ypcat passwd` menampilkan `user-nis1` dan `user-nis2` dari server.
+
+![4.2](screenshots/4.2.png)
+
+### Tugas 2: Samba AD DC
+
+**6.1.** dc1: memasang Samba, Kerberos, dan winbind.
+
+![6.1](screenshots/6.1.png)
+
+**6.2.** dc1: akhir provisioning domain, `Server Role: active directory domain controller`.
+
+![6.2](screenshots/6.2.png)
+
+**7.1.** dc1: layanan `samba-ad-dc` berstatus active (running).
+
+![7.1](screenshots/7.1.png)
+
+**8.1.** dc1: `kinit administrator@SINERGI.INTERNAL` lalu `klist` menampilkan tiket `krbtgt`.
+
+![8.1](screenshots/8.1.png)
+
+**8.2.** dc1: record DNS SRV untuk LDAP (389) dan Kerberos (88) menunjuk ke dc1.
+
+![8.2](screenshots/8.2.png)
+
+**9.1.** dc1: membuat user domain `budi.santoso` dan menampilkan daftar user.
+
+![9.1](screenshots/9.1.png)
+
+### Tugas 3A: Domain join Linux
+
+**10.1.** client-linux: DNS diarahkan ke dc1 (`/etc/resolv.conf`) dan paket `realmd`, `sssd` terpasang.
+
+![10.1](screenshots/10.1.png)
+
+**11.1.** client-linux: `realm discover sinergi.internal` menemukan domain.
+
+![11.1](screenshots/11.1.png)
+
+**11.2.** client-linux: `realm join` dan `realm list` menunjukkan `configured: kerberos-member`.
+
+![11.2](screenshots/11.2.png)
+
+**12.1.** client-linux: mengaktifkan `pam_mkhomedir` agar home directory dibuat otomatis.
+
+![12.1](screenshots/12.1.png)
+
+**12.2.** client-linux: login sebagai `budi.santoso@sinergi.internal` (`pwd`, `whoami`, `id`).
+
+![12.2](screenshots/12.2.png)
+
+### Tugas 3B: Domain join Windows
+
+**13.1.** client-win: IP 192.168.10.60 dan DNS 192.168.10.10 (`ipconfig /all`).
+
+![13.1](screenshots/13.1.png)
+
+**14.1.** client-win: mengisi domain `sinergi.internal` di System Properties.
+
+![14.1](screenshots/14.1.png)
+
+**14.2.** client-win: dialog `Welcome to the sinergi.internal domain`.
+
+![14.2](screenshots/14.2.png)
+
+**15.1.** client-win: login memakai akun domain.
+
+![15.1](screenshots/15.1.png)
+
+**15.2.** client-win: `whoami` menampilkan `sinergi\budi.santoso`.
+
+![15.2](screenshots/15.2.png)
+
+### Kendala nyata
+
+**T.1.** Penulisan `/etc/resolv.conf` ditolak (`Operation not permitted`).
+
+![T.1](screenshots/T.1.png)
+
+**T.2.** Windows tidak menjangkau DC karena IP salah ketik (`192.169.10.60`).
+
+![T.2](screenshots/T.2.png)
 
 ## Kendala nyata dan penanganannya
 
@@ -60,7 +193,8 @@ Seluruh screenshot ada di folder [screenshots](screenshots/) dengan nama sesuai 
 
 ```
 sso-samba-ad-lab/
-├── README.md
+├── README.md      versi Indonesia
+├── README.en.md   versi Inggris
 ├── .gitignore
 ├── screenshots/   bukti per langkah (1.1.png, 1.2.png, ...)
 ├── scripts/       perintah lab dalam bentuk skrip (tanpa password)
@@ -76,6 +210,7 @@ sso-samba-ad-lab/
 
 ## Referensi
 
-- Samba Wiki, [Using a Group Policy Preference](https://wiki.samba.org/index.php/Using_a_Group_Policy_Preference)
+- Samba Wiki, [Setting up Samba as an Active Directory Domain Controller](https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller)
+- freedesktop.org, [realmd documentation](https://www.freedesktop.org/software/realmd/docs/)
 - Red Hat, [Enabling offline authentication](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/configuring_authentication_and_authorization_in_rhel/assembly_additional-configuration-for-identity-and-authentication-providers_configuring-authentication-and-authorization-in-rhel)
 - RFC 4120, [The Kerberos Network Authentication Service (V5)](https://www.rfc-editor.org/rfc/rfc4120)
