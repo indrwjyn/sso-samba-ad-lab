@@ -1,0 +1,42 @@
+Wed Nov 25 02:15:14 AM EST 2026
+client-linux.sinergi.internal
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic enp0s3
+       valid_lft 85677sec preferred_lft 85677sec
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    inet 192.168.10.50/24 brd 192.168.10.255 scope global enp0s8
+       valid_lft forever preferred_lft forever
+
+--- NIS client
+nis-sinergi
+192.168.10.10
+indra:x:1000:1000:indra,,,:/home/indra:/bin/bash
+user-nis2:x:1002:1002:,,,:/home/user-nis2:/bin/bash
+user-nis1:x:1001:1001:,,,:/home/user-nis1:/bin/bash
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+
+--- DNS SRV
+_ldap._tcp.sinergi.internal has SRV record 0 100 389 dc1.sinergi.internal.
+_kerberos._tcp.sinergi.internal has SRV record 0 100 88 dc1.sinergi.internal.
+
+--- Domain join
+sinergi.internal
+  type: kerberos
+  realm-name: SINERGI.INTERNAL
+  domain-name: sinergi.internal
+  configured: kerberos-member
+  server-software: active-directory
+  client-software: sssd
+  required-package: sssd-tools
+  required-package: sssd
+  required-package: libnss-sss
+  required-package: libpam-sss
+  required-package: adcli
+  required-package: samba-common-bin
+  login-formats: %U@sinergi.internal
+  login-policy: allow-realm-logins
+
+uid=1687401103(budi.santoso@sinergi.internal) gid=1687400513(domain users@sinergi.internal) groups=1687400513(domain users@sinergi.internal)
