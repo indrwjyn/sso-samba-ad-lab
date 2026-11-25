@@ -1,0 +1,8 @@
+*.vdi
+*.vbox
+*.vmdk
+*.iso
+*.log
+*.key
+*.pem
+.env
